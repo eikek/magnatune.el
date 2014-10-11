@@ -72,10 +72,12 @@
 (defvar magnatune/free-url-fmt "http://he3.magnatune.com/all/%s.%s"
   "The url pattern for streaming a song.")
 
-(defvar magnatune/member-url-fmt "http://%s:%s@download.magnatune.com/all/%s_nospeech.%s"
+(defvar magnatune/member-url-fmt
+  "http://%s:%s@download.magnatune.com/all/%s_nospeech.%s"
   "The url pattern used for streaming songs with membership access.")
 
-(defvar magnatune/sqlite-download-url "http://he3.magnatune.com/info/sqlite_normalized.db.gz"
+(defvar magnatune/sqlite-download-url
+  "http://he3.magnatune.com/info/sqlite_normalized.db.gz"
   "Magnatunes catalog as sqlite file.")
 
 (defvar magnatune/enable-gzip t
@@ -212,7 +214,9 @@ logged, but this may be overriden by settings
        (let ((rc (call-process sqlite nil t nil "-line" db cmds))
              (out (current-buffer)))
          (with-current-buffer log
-           (insert "  " (number-to-string rc) (if (eq rc 0) " success." " failed."))
+           (insert "  "
+                   (number-to-string rc)
+                   (if (eq rc 0) " success." " failed."))
            (newline)
            (when (or magnatune/log-sqlite-output (/= 0 rc))
              (insert "--- output ---")
@@ -277,9 +281,13 @@ and stored locally. The gunzip tool is then used to unpack the
 file. The file is downloaded if new contents are detected. Return
 the path to the db file."
   (interactive)
-  (let* ((localfile (if magnatune/enable-gzip "magnatune.db.gz" "magnatune.db"))
+  (let* ((localfile (if magnatune/enable-gzip
+                        "magnatune.db.gz"
+                      "magnatune.db"))
          (dbfilegz (expand-file-name localfile magnatune/workdir))
-         (dbfile (if magnatune/enable-gzip (file-name-sans-extension dbfilegz) dbfilegz)))
+         (dbfile (if magnatune/enable-gzip
+                     (file-name-sans-extension dbfilegz)
+                   dbfilegz)))
     (when (or (magnatune/--catalog-changed-p)
               (not (file-exists-p dbfile)))
       (message "Downloading magnatune's catalog…")
@@ -293,7 +301,8 @@ the path to the db file."
         (with-temp-buffer
           (let ((rc (call-process "gzip" nil t nil "-df" dbfilegz)))
             (when (/= rc 0)
-              (error "Could not gzip -df the magnatune db file: %s" (buffer-string)))))))
+              (error "Could not gzip -df the magnatune db file: %s"
+                     (buffer-string)))))))
     dbfile))
 
 (defun magnatune/item-type (item)
@@ -320,7 +329,8 @@ artists starting with QUERY-OR-ID. If QUERY-OR-ID is a number, it
 is used to lookup the artist by this id. The result is a list of
 plists."
   (let ((select (concat "select ar.artists_id, ar.name,ar.description,ar.homepage,ar.photo,"
-                        "  count(distinct al.album_id) as albums, count(s.song_id) as songs, sum(s.duration) as length "
+                        "  count(distinct al.album_id) as albums, count(s.song_id) as songs, "
+                        "  sum(s.duration) as length "
                         "from artists ar, albums al, songs s "
                         "where ar.artists_id = al.artist_id and s.album_id = al.album_id %s "
                         "group by (ar.artists_id)"
@@ -332,11 +342,14 @@ plists."
      ((null query-or-id)
       (magnatune/--sqlite-select (format select "")))
      ((numberp query-or-id)
-      (magnatune/--sqlite-select (format select (format "and ar.artists_id = %d" query-or-id))))
+      (magnatune/--sqlite-select
+       (format select (format "and ar.artists_id = %d" query-or-id))))
      ((and (stringp query-or-id) strict)
-      (magnatune/--sqlite-select (format select (format "and ar.name = '%s'" query-or-id))))
+      (magnatune/--sqlite-select
+       (format select (format "and ar.name = '%s'" query-or-id))))
      ((and (stringp query-or-id) (not strict))
-      (magnatune/--sqlite-select (format select (format "and ar.name like '%s'" query-or-id))))
+      (magnatune/--sqlite-select
+       (format select (format "and ar.name like '%s'" query-or-id))))
      (t (user-error "Unrecognised query: %s" (prin1 query-or-id))))))
 
 (defun magnatune/get-artist-info (id)
@@ -397,7 +410,8 @@ artists id to use."
    ((numberp artist-or-id)
     (magnatune/--album-query (format "and ar.artists_id = %d" artist-or-id)))
    ((stringp artist-or-id)
-    (let ((id (plist-get (car (magnatune/search-artist artist-or-id t)) :artists_id)))
+    (let ((id (plist-get (car (magnatune/search-artist artist-or-id t))
+                         :artists_id)))
       (when id
         (magnatune/--album-query (format "and ar.artists_id = %d" id)))))))
 
@@ -413,13 +427,18 @@ tagged with this genre. The result is a list of plists."
    ((null query-or-id)
     (magnatune/--album-query nil offset limit order))
    ((numberp query-or-id)
-    (magnatune/--album-query (format "and al.album_id = %d" query-or-id) offset limit order))
+    (magnatune/--album-query
+     (format "and al.album_id = %d" query-or-id) offset limit order))
    ((eq (magnatune/item-type query-or-id) 'genre)
-    (magnatune/--album-query (format " and ga.genre_id = %d" (plist-get query-or-id :genre_id)) offset limit order))
+    (magnatune/--album-query (format " and ga.genre_id = %d"
+                                     (plist-get query-or-id :genre_id))
+                             offset limit order))
    ((and (stringp query-or-id) strict)
-    (magnatune/--album-query (format "and al.name = '%s'" query-or-id) offset limit order))
+    (magnatune/--album-query (format "and al.name = '%s'" query-or-id)
+                             offset limit order))
    ((and (stringp query-or-id) (not strict))
-    (magnatune/--album-query (format "and al.name like '%s'" query-or-id) offset limit order))
+    (magnatune/--album-query (format "and al.name like '%s'" query-or-id)
+                             offset limit order))
    (t (user-error "Unrecognised query: %s" (prin1 query-or-id)))))
 
 (defun magnatune/get-album-info (id)
@@ -572,24 +591,29 @@ configured membership."
                   nil))))))))))
 
 (defun magnatune/insert-artist (artist chunk index)
-  (let ((id (format "(id %d chunk %d index %d)" (plist-get artist :artists_id) chunk index))
+  (let ((id (format "(id %d chunk %d index %d)"
+                    (plist-get artist :artists_id) chunk index))
         (name (magnatune/--string (plist-get artist :name)))
         (descr (plist-get artist :description))
         (albums (plist-get artist :albums))
         (songs (plist-get artist :songs))
         (len (plist-get artist :length)))
-    (put-text-property 0 (length name) 'font-lock-face font-lock-keyword-face name)
+    (put-text-property 0 (length name)
+                       'font-lock-face font-lock-keyword-face name)
     (put-text-property 0 (length id) 'invisible t id)
     (insert id)
     (insert name "\n")
     (let ((beg (point)))
-      (put-text-property 0 (length descr) 'font-lock-face 'font-lock-doc-string-face descr)
+      (put-text-property 0 (length descr)
+                         'font-lock-face 'font-lock-doc-string-face descr)
       (insert descr "\n")
       (set-mark beg)
       (fill-paragraph nil t)
       (set-mark nil))
-    (let ((info (format "%d albums, %d songs, %smin\n" albums songs (magnatune/--format-time len))))
-      (put-text-property 0 (length info) 'font-lock-face font-lock-comment-face info)
+    (let ((info (format "%d albums, %d songs, %smin\n"
+                        albums songs (magnatune/--format-time len))))
+      (put-text-property 0 (length info)
+                         'font-lock-face font-lock-comment-face info)
       (insert info))
     (insert-char ?⎻ magnatune/column-width) ;;HORIZONTAL SCAN LINE-3
     (insert-char ?\n)))
@@ -598,7 +622,8 @@ configured membership."
   (let* ((album (car results))
          (artist (magnatune/--string (plist-get album :artist)))
          (artistid (plist-get album :artists_id))
-         (homepage (magnatune/--make-url magnatune/artist-page-url-fmt (plist-get album :artist_page)))
+         (homepage (magnatune/--make-url magnatune/artist-page-url-fmt
+                                         (plist-get album :artist_page)))
          (photo (plist-get album :artist_photo))
          (name (magnatune/--string (plist-get album :name)))
          (imgurl (concat magnatune/band-photo-url-fmt photo)))
@@ -614,7 +639,8 @@ configured membership."
         (set-mark nil)))))
 
 (defun magnatune/insert-album (album chunk index &optional with-artist-p)
-  (let ((id (format "(id %d chunk %d index %d)" (plist-get album :album_id) chunk index))
+  (let ((id (format "(id %d chunk %d index %d)"
+                    (plist-get album :album_id) chunk index))
         (name (magnatune/--string (plist-get album :name)))
         (nametrunc nil)
         (artist (magnatune/--string (plist-get album :artist)))
@@ -625,16 +651,19 @@ configured membership."
         (len (magnatune/--format-time (plist-get album :length))))
     (when with-artist-p
       (setq name (concat name " | " artist)))
-    (setq nametrunc (s-truncate (- magnatune/column-width (length genres) 3) name))
+    (setq nametrunc (s-truncate (- magnatune/column-width (length genres) 3)
+                                name))
     (unless (equal name nametrunc)
       (setq truncated-items (cons (cons (plist-get album :album_id) name)
                                   truncated-items)))
-    (put-text-property 0 (length nametrunc) 'font-lock-face font-lock-keyword-face nametrunc)
+    (put-text-property 0 (length nametrunc)
+                       'font-lock-face font-lock-keyword-face nametrunc)
     (put-text-property 0 (length id) 'invisible t id)
     (let ((beg (point)))
       (insert id)
       (insert nametrunc)
-      (while (< (- (point) beg) (+ (length id) (- magnatune/column-width (length genres))))
+      (while (< (- (point) beg)
+                (+ (length id) (- magnatune/column-width (length genres))))
         (insert " "))
       (insert genres "\n"))
     (let ((str (format "%s, %d songs, %smin (Popularity: %d)\n"
@@ -689,16 +718,19 @@ configured membership."
     (insert-char ?\n)))
 
 (defun magnatune/insert-genre (genre chunk index)
-  (let* ((id (format "(id %d chunk %d index %d)" (plist-get genre :genre_id) chunk index))
+  (let* ((id (format "(id %d chunk %d index %d)"
+                     (plist-get genre :genre_id) chunk index))
          (name (magnatune/--string (plist-get genre :name)))
          (albums (plist-get genre :albums))
          (beg (point)))
-    (put-text-property 0 (length name) 'font-lock-face font-lock-keyword-face name)
+    (put-text-property 0 (length name)
+                       'font-lock-face font-lock-keyword-face name)
     (put-text-property 0 (length id) 'invisible t id)
     (insert id)
     (insert name "\n")
     (let ((info (format "%d albums\n" albums)))
-      (put-text-property 0 (length info) 'font-lock-face font-lock-comment-face info)
+      (put-text-property 0 (length info)
+                         'font-lock-face font-lock-comment-face info)
       (insert info))
     (insert-char ?― magnatune/column-width)
     (insert-char ?\n)))
@@ -709,7 +741,9 @@ configured membership."
          (cell (assoc id truncated-items)))
     (when cell
       (message "%s" (cdr cell)))))
-(add-hook 'magnatune/browse-move-hook 'magnatune/--display-truncated-lines)
+
+(add-hook 'magnatune/browse-move-hook
+          'magnatune/--display-truncated-lines)
 
 
 (defun magnatune/--insert-elements (results chunk insert-fn &optional head-fn foot-fn)
@@ -860,9 +894,11 @@ list."
                      (magnatune/--make-all-artists-buffer)
                    (if (or (eq what ?l) (eq what ?L))
                        (magnatune/--make-all-albums-buffer)
-                     (magnatune/--make-all-genres-buffer)))))
+                     (magnatune/--make-all-genres-buffer))))
+         (type (magnatune/browse-buffer-type buffer)))
     (with-current-buffer buffer
-      (if (and arg (not (eq (magnatune/browse-buffer-type buffer) 'all-genres)))
+      (if (and arg
+               (not (equal type 'all-genres)))
           (setq query (read-string "Query: "))
         (setq query nil))
       (when (and offset limit)
@@ -1182,7 +1218,8 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'."
   :lighter ""
   :keymap nil)
 
-(define-global-minor-mode magnatune/global-browse-follow-mode magnatune/browse-follow-mode
+(define-global-minor-mode magnatune/global-browse-follow-mode
+  magnatune/browse-follow-mode
   (lambda () (magnatune/browse-follow-mode 1)))
 
 (if magnatune/browse-mode-map

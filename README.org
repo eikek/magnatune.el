@@ -1,6 +1,6 @@
-* magnatune.el
+#+TITLE: magnatune.el
 
-This library lets you browse through [[http://www.magnatune.com][magnatune's]] greate music
+This library lets you browse through [[http://www.magnatune.com][magnatune's]] great music
 collection using emacs. The [[https://sqlite.org/][sqlite3]] tool is required for this to work.
 
 When on an artist, album or song the ~magnatune/open-item-at-point~
@@ -19,9 +19,9 @@ not exist on your platform, then you can set ~magnatune/enable-gzip~
 to ~nil~. The database file is checked every week for updates and
 redownloaded, if it changed upstream.
 
-** Installation
+* Installation
 
-Install [[http://www.sqlite.org][sqlite]] first, on most linuxes it is often already installed,
+Install [[http://www.sqlite.org/download.html][sqlite]] first, on most linuxes it is often already installed,
 or just use your package manager. It's also recommended to install
 [[http://www.gzip.org/][gzip]]. Again on most *nixes this is usually already there.
 
@@ -32,7 +32,7 @@ require the file
 (require 'magnatune)
 #+end_src
 
-** Configuration
+* Configuration
 
 For membership stream urls, you need to set username and password.
 
@@ -73,50 +73,44 @@ collection. Usually it's convenient to have a key binding for it:
 (global-set-key (kbd "C-<f11>") 'magnatune/browse)
 #+end_src
 
-
-** Key bindings
+* Key bindings
 
 There are some default bindings:
 
-| Key              | Command                               | Description                |
-|------------------+---------------------------------------+----------------------------|
-| /                | magnatune/browse-jump                 | Go to the item starting    |
-|                  |                                       | with a prefix string       |
-| A-Z              | magnatune/browse-jump-A .. Z          | Go to the item in the      |
-|                  |                                       | list starting with this    |
-|                  |                                       | letter                     |
-| e                | magnatune/next-results                | Load the next chunk from   |
-|                  |                                       | the db.                    |
-| g                | magnatune/browse-update-view          | reload the buffer          |
-| <remap>          | magnatune/browse-next                 | go to the next item in     |
-| <next-line>      |                                       | the list                   |
-| n                | magnatune/browse-next                 |                            |
-|                  |                                       |                            |
-| <remap>          | magnatune/browse-prev                 | go to the previous item    |
-| <previous-line>, |                                       | in the list                |
-| p                |                                       |                            |
-|                  |                                       |                            |
-| q                | quit-window                           | bury or kill the buffer    |
-| s                | magnatune/sort-all-albums             | When listing all albums    |
-|                  |                                       | ask for an order to apply  |
-| RET              | magnatune/find-next                   | go to the next level       |
-| <C-return>       | magnatune/find-next-other-window      | go to the next level in    |
-|                  |                                       | another window             |
-| <remap>          | Prefix Command                        |                            |
-|------------------+---------------------------------------+----------------------------|
-| C-a              | magnatune/find-artist-of-item         | When on an album go to     |
-|                  |                                       | the artist.                |
-| C-b              | magnatune/browse-artist-or-album-page | Get the web url for the    |
-|                  |                                       | artist or album and        |
-|                  |                                       | either browse or copy it   |
-| C-f              | magnatune/global-browse-follow-mode   | enable to always follow    |
-|                  |                                       | an item                    |
-| C-o              | magnatune/open-thing-at-point         | collect stream urls of     |
-|                  |                                       | item at point and call     |
-|                  |                                       | open-urls-hook             |
-| C-q              | magnatune/quit-all-windows            | Quits all windows or kills |
-|                  |                                       | all magnatune buffers      |
-| SPC              | scroll-up-line                        |                            |
-|------------------+---------------------------------------+----------------------------|
-| <remap>          | magnatune/copy-urls-at-point          | copy all stream urls of    |
-| <kill-ring-save> |                                       | current item in kill ring  |
+| Key                | Description                                                          |
+|--------------------+----------------------------------------------------------------------|
+| /                  | Go to the item starting with some prefix                             |
+| A-Z                | Go to the first item in the list starting with this letter.          |
+| e                  | Load the next result chunk from the db.                              |
+| g                  | Reload the buffer.                                                   |
+| <next-line>, n     | Go to the next item in the list.                                     |
+| <previous-line>, p | Go to the previous item in the list.                                 |
+| q                  | Bury or kill the buffer.                                             |
+| s                  | When listing all albums ask for an order to apply.                   |
+| RET                | Go to the next level.                                                |
+| <C-return>         | Go to the next level in another window.                              |
+| C-a                | When on an album go to the artist.                                   |
+| C-b                | Get the web url for the artist or album and either browse or copy it |
+| C-f                | Enable to always follow (~<C-return>~) an item.                      |
+| C-o                | Collect stream urls of item at point and call open-urls-hook.        |
+| C-q                | Quits all windows or kills all magnatune buffers.                    |
+| SPC                | Scroll up one line.                                                  |
+| <kill-ring-save>   | Copy all stream urls of item in kill ring                            |
+|--------------------+----------------------------------------------------------------------|
+
+* License
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs; see the file COPYING. If not, write to the Free
+Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
