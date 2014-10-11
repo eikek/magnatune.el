@@ -1,0 +1,122 @@
+* magnatune.el
+
+This library lets you browse through [[http://www.magnatune.com][magnatune's]] greate music
+collection using emacs. The [[https://sqlite.org/][sqlite3]] tool is required for this to work.
+
+When on an artist, album or song the ~magnatune/open-item-at-point~
+command collects the stream urls and calls a hook. There are two
+provided hook functions:
+
+- one adds the urls via emac's built in ~mpc~ library to the current
+  playlist of a local mpd
+- a second passes the urls to some external player
+
+Magnatune provides its catalog as an sqlite3 file at [[http://magnatune.com/info/sqlite-normalized][this site]]. This
+file is downloaded and the =sqlite3= program is used to search the
+database. To be polite, by default the gzipped database file is
+downloaded and unzipped using the local =gzip= command. If this does
+not exist on your platform, then you can set ~magnatune/enable-gzip~
+to ~nil~. The database file is checked every week for updates and
+redownloaded, if it changed upstream.
+
+** Installation
+
+Install [[http://www.sqlite.org][sqlite]] first, on most linuxes it is often already installed,
+or just use your package manager. It's also recommended to install
+[[http://www.gzip.org/][gzip]]. Again on most *nixes this is usually already there.
+
+Then clone the repository and add it to Emac's ~load-path~. Then
+require the file
+
+#+begin_src emacs-lisp :tangle
+(require 'magnatune)
+#+end_src
+
+** Configuration
+
+For membership stream urls, you need to set username and password.
+
+#+begin_src emacs-lisp :tangle no
+(setq magnatune/username "username")
+(setq magnatune/password "password")
+#+end_src
+
+To enable the open command, add a function to the
+~magnatune/open-urls-hook~:
+
+#+begin_src emacs-lisp :tangle no
+(add-hook 'magnatune/open-urls-hook 'magnatune/mpc-url-hook)
+;; or
+;; (add-hook 'magnatune/open-urls-hook 'magnatune/external-url-hook)
+#+end_src
+
+If using ~magnatune/external-url-hook~ you also might want to set
+~magnatune/external-player~ to the desired player command.
+
+The hook functions are called with the url list and a second optional
+argument which is the prefix arg if used (in raw form).
+
+If you don't have a ~gzip~ command on your system, disable the use of
+it (by default it is enabled):
+#+begin_src emacs-lisp :tangle no
+(setq magnatune/enable-gzip nil)
+#+end_src
+
+The location of the ~sqlite3~ command can be configured, too:
+#+begin_src emacs-lisp :tangle no
+(setq magnatune/sqlite-cmd "/usr/local/bin/sqlite3")
+#+end_src
+
+The ~magnatune/browse~ function is the entry point to the
+collection. Usually it's convenient to have a key binding for it:
+#+begin_src emacs-lisp :tangle no
+(global-set-key (kbd "C-<f11>") 'magnatune/browse)
+#+end_src
+
+
+** Key bindings
+
+There are some default bindings:
+
+| Key              | Command                               | Description                |
+|------------------+---------------------------------------+----------------------------|
+| /                | magnatune/browse-jump                 | Go to the item starting    |
+|                  |                                       | with a prefix string       |
+| A-Z              | magnatune/browse-jump-A .. Z          | Go to the item in the      |
+|                  |                                       | list starting with this    |
+|                  |                                       | letter                     |
+| e                | magnatune/next-results                | Load the next chunk from   |
+|                  |                                       | the db.                    |
+| g                | magnatune/browse-update-view          | reload the buffer          |
+| <remap>          | magnatune/browse-next                 | go to the next item in     |
+| <next-line>      |                                       | the list                   |
+| n                | magnatune/browse-next                 |                            |
+|                  |                                       |                            |
+| <remap>          | magnatune/browse-prev                 | go to the previous item    |
+| <previous-line>, |                                       | in the list                |
+| p                |                                       |                            |
+|                  |                                       |                            |
+| q                | quit-window                           | bury or kill the buffer    |
+| s                | magnatune/sort-all-albums             | When listing all albums    |
+|                  |                                       | ask for an order to apply  |
+| RET              | magnatune/find-next                   | go to the next level       |
+| <C-return>       | magnatune/find-next-other-window      | go to the next level in    |
+|                  |                                       | another window             |
+| <remap>          | Prefix Command                        |                            |
+|------------------+---------------------------------------+----------------------------|
+| C-a              | magnatune/find-artist-of-item         | When on an album go to     |
+|                  |                                       | the artist.                |
+| C-b              | magnatune/browse-artist-or-album-page | Get the web url for the    |
+|                  |                                       | artist or album and        |
+|                  |                                       | either browse or copy it   |
+| C-f              | magnatune/global-browse-follow-mode   | enable to always follow    |
+|                  |                                       | an item                    |
+| C-o              | magnatune/open-thing-at-point         | collect stream urls of     |
+|                  |                                       | item at point and call     |
+|                  |                                       | open-urls-hook             |
+| C-q              | magnatune/quit-all-windows            | Quits all windows or kills |
+|                  |                                       | all magnatune buffers      |
+| SPC              | scroll-up-line                        |                            |
+|------------------+---------------------------------------+----------------------------|
+| <remap>          | magnatune/copy-urls-at-point          | copy all stream urls of    |
+| <kill-ring-save> |                                       | current item in kill ring  |
