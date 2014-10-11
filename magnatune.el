@@ -916,6 +916,7 @@ artist search view, go to the albums of the current artist. If on
 an album, go to its songs. If POP is truthy, `pop-to-buffer'."
   (interactive (list (magnatune/get-item-at-point)))
   (let* ((type (magnatune/browse-buffer-type))
+         (item (or item (magnatune/get-item-at-point)))
          (next (cond
                 ((eq type 'all-artists)
                  (magnatune/--make-artist-buffer))
@@ -1097,9 +1098,10 @@ coming from the artist list."
      ((eq bufftype 'all-artists)
       (magnatune/find-next))
      ((eq bufftype 'artist) nil)
-     ((eq bufftype 'album)
+     (t
       (let* ((item (magnatune/get-item-at-point))
-             (id  (plist-get item :artists_id)))
+             (id  (or (plist-get item :artist_id)
+                      (plist-get item :artists_id))))
         (when id
           (with-current-buffer (magnatune/--make-artist-buffer)
             (setq query id)
