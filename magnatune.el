@@ -607,9 +607,7 @@ configured membership."
       (put-text-property 0 (length descr)
                          'font-lock-face 'font-lock-doc-string-face descr)
       (insert descr "\n")
-      (set-mark beg)
-      (fill-paragraph nil t)
-      (set-mark nil))
+      (fill-region beg (point)))
     (let ((info (format "%d albums, %d songs, %smin\n"
                         albums songs (magnatune/--format-time len))))
       (put-text-property 0 (length info)
@@ -634,9 +632,7 @@ configured membership."
       (insert artist "\n" homepage "\n\n")
       (let ((beg (point)))
         (insert (magnatune/get-artist-info artistid) "\n\n")
-        (set-mark beg)
-        (fill-paragraph nil t)
-        (set-mark nil)))))
+        (fill-region beg (point))))))
 
 (defun magnatune/insert-album (album chunk index &optional with-artist-p)
   (let ((id (format "(id %d chunk %d index %d)"
@@ -692,9 +688,7 @@ configured membership."
     (insert str "\n\n")
     (let ((beg (point)))
       (insert (magnatune/get-album-info albumid) "\n\n")
-      (set-mark beg)
-      (fill-paragraph nil t)
-      (set-mark nil))))
+      (fill-region beg (point)))))
 
 (defun magnatune/insert-song (song chunk index)
   (let* ((id (format "(id %d chunk %d index %d)" (plist-get song :song_id) chunk index))
