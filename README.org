@@ -95,6 +95,7 @@ There are some default bindings:
 | C-o                | Collect stream urls of item at point and call open-urls-hook.        |
 | C-q                | Quits all windows or kills all magnatune buffers.                    |
 | C-c                | Copy all stream urls of item in kill ring                            |
+| C-d                | Download the album as zip file (only with membership)                |
 | SPC                | Scroll up one line.                                                  |
 |--------------------+----------------------------------------------------------------------|
 

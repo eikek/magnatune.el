@@ -57,6 +57,7 @@
 ;;
 ;;; Code:
 
+(require 'thingatpt)
 (require 'dash)
 (require 's)
 
@@ -69,12 +70,23 @@
 (defvar magnatune/streaming-format "ogg"
   "The file format used for streaming. Default is ogg.")
 
+(defvar magnatune/download-format "flac"
+  "The format used when downloading albums.")
+
 (defvar magnatune/free-url-fmt "http://he3.magnatune.com/all/%s.%s"
   "The url pattern for streaming a song.")
 
 (defvar magnatune/member-url-fmt
   "http://%s:%s@download.magnatune.com/all/%s_nospeech.%s"
   "The url pattern used for streaming songs with membership access.")
+
+(defvar magnatune/download-url-fmt
+  "http://download.magnatune.com/membership/download3?sku=%s&format=%s"
+  "The url used to donwload albums.")
+
+(defvar magnatune/download-folder
+  (expand-file-name "Downloads" "~")
+  "Folder used to store donwloaded albums.")
 
 (defvar magnatune/sqlite-download-url
   "http://he3.magnatune.com/info/sqlite_normalized.db.gz"
@@ -1110,6 +1122,33 @@ coming from the artist list."
                 (pop-to-buffer (current-buffer))
               (switch-to-buffer (current-buffer))))))))))
 
+(defun magnatune/download-album (sku &optional format targetdir)
+  "Download the zip file of the album given with SKU.
+Download files with FORMAT, but use `magnatune/download-format'
+if not specified. Put the file in TARGET_DIR or
+`magnatune/download-folder'."
+  (interactive (list
+                (let* ((item (magnatune/get-item-at-point))
+                       (sku (plist-get item :sku)))
+                  (or sku (user-error "Not on an album.")))))
+  (when (not (and magnatune/password magnatune/username))
+    (user-error "Downloading albums requires a magnatune membership."))
+  (let* ((fmt (or format magnatune/download-format))
+         (url (magnatune/--make-url magnatune/download-url-fmt
+                                    sku
+                                    fmt)))
+    (message "Downloading …")
+    (let ((url-request-extra-headers
+           `(("Authorization" . ,(concat "Basic "
+                                         (base64-encode-string
+                                          (concat magnatune/username ":"
+                                                  magnatune/password)))))))
+      (url-copy-file url
+                     (expand-file-name (concat sku ".zip")
+                                       (or targetdir
+                                           magnatune/download-folder))))
+    (message "Downloaded %s." sku)))
+
 (defun magnatune/sort-all-albums ()
   "Sort the albums list.
 This is only applicable for the 'all-albums' buffer."
@@ -1243,6 +1282,7 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'."
   (define-key magnatune/browse-mode-map (kbd "\C-b") 'magnatune/browse-artist-or-album-page)
   (define-key magnatune/browse-mode-map (kbd "SPC") 'scroll-up-line)
   (define-key magnatune/browse-mode-map (kbd "\C-c") 'magnatune/copy-urls-at-point)
+  (define-key magnatune/browse-mode-map (kbd "\C-d") 'magnatune/download-album)
   (define-key magnatune/browse-mode-map (kbd "/") 'magnatune/browse-jump)
   (-each (-iterate '1+ 65 26)
     (lambda (c)
