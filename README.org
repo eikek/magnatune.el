@@ -94,8 +94,8 @@ There are some default bindings:
 | C-f                | Enable to always follow (~<C-return>~) an item.                      |
 | C-o                | Collect stream urls of item at point and call open-urls-hook.        |
 | C-q                | Quits all windows or kills all magnatune buffers.                    |
+| C-c                | Copy all stream urls of item in kill ring                            |
 | SPC                | Scroll up one line.                                                  |
-| <kill-ring-save>   | Copy all stream urls of item in kill ring                            |
 |--------------------+----------------------------------------------------------------------|
 
 * License

@@ -1242,9 +1242,7 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'."
   (define-key magnatune/browse-mode-map (kbd "\C-a") 'magnatune/find-artist-of-item)
   (define-key magnatune/browse-mode-map (kbd "\C-b") 'magnatune/browse-artist-or-album-page)
   (define-key magnatune/browse-mode-map (kbd "SPC") 'scroll-up-line)
-  (define-key magnatune/browse-mode-map
-    [remap kill-ring-save]
-    'magnatune/copy-urls-at-point)
+  (define-key magnatune/browse-mode-map (kbd "\C-c") 'magnatune/copy-urls-at-point)
   (define-key magnatune/browse-mode-map (kbd "/") 'magnatune/browse-jump)
   (-each (-iterate '1+ 65 26)
     (lambda (c)
