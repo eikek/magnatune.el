@@ -88,6 +88,9 @@
   (expand-file-name "Downloads" "~")
   "Folder used to store donwloaded albums.")
 
+(defvar magnatune/download-hook nil
+  "Hook executed with downloaded album file.")
+
 (defvar magnatune/sqlite-download-url
   "http://he3.magnatune.com/info/sqlite_normalized.db.gz"
   "Magnatunes catalog as sqlite file.")
@@ -99,7 +102,8 @@ file and uncompress it locally using gzip.")
 (defvar magnatune/changes-url "http://magnatune.com/info/changed.txt"
   "Magnatunes changed file.")
 
-(defvar magnatune/workdir (expand-file-name "magnatune" "~/.emacs.d")
+(defvar magnatune/workdir (expand-file-name "magnatune"
+                                            (expand-file-name ".emacs.d" "~"))
   "The working directory to store the db file.")
 
 (defvar magnatune/sqlite-cmd "/usr/bin/sqlite3"
@@ -1126,7 +1130,7 @@ coming from the artist list."
   "Download the zip file of the album given with SKU.
 Download files with FORMAT, but use `magnatune/download-format'
 if not specified. Put the file in TARGET_DIR or
-`magnatune/download-folder'."
+`magnatune/download-folder'. Return the file name."
   (interactive (list
                 (let* ((item (magnatune/get-item-at-point))
                        (sku (plist-get item :sku)))
@@ -1142,12 +1146,14 @@ if not specified. Put the file in TARGET_DIR or
            `(("Authorization" . ,(concat "Basic "
                                          (base64-encode-string
                                           (concat magnatune/username ":"
-                                                  magnatune/password)))))))
-      (url-copy-file url
-                     (expand-file-name (concat sku ".zip")
+                                                  magnatune/password))))))
+          (file (expand-file-name (concat sku ".zip")
                                        (or targetdir
                                            magnatune/download-folder))))
-    (message "Downloaded %s." sku)))
+      (url-copy-file url file)
+      (run-hook-with-args 'magnatune/download-hook file)
+      (message "Downloaded %s." sku)
+      file)))
 
 (defun magnatune/sort-all-albums ()
   "Sort the albums list.
