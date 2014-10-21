@@ -629,7 +629,7 @@ configured membership."
       (put-text-property 0 (length info)
                          'font-lock-face font-lock-comment-face info)
       (insert info))
-    (insert-char ?⎻ magnatune/column-width) ;;HORIZONTAL SCAN LINE-3
+    (insert-char ?― magnatune/column-width) ;;HORIZONTAL SCAN LINE-3
     (insert-char ?\n)))
 
 (defun magnatune/insert-album-head (results)
@@ -685,7 +685,7 @@ configured membership."
                        pop)))
       (put-text-property 0 (length str) 'font-lock-face font-lock-comment-face str)
       (insert str))
-    (insert-char ?⎻ magnatune/column-width)
+    (insert-char ?― magnatune/column-width)
     (insert-char ?\n)))
 
 (defun magnatune/insert-song-head (results)
