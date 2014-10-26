@@ -1272,12 +1272,6 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'."
   (define-key magnatune/browse-mode-map (kbd "g") 'magnatune/browse-update-view)
   (define-key magnatune/browse-mode-map (kbd "e") 'magnatune/next-results)
   (define-key magnatune/browse-mode-map (kbd "s") 'magnatune/sort-all-albums)
-  (define-key magnatune/browse-mode-map
-    [remap next-line]
-    'magnatune/browse-next)
-  (define-key magnatune/browse-mode-map
-    [remap previous-line]
-    'magnatune/browse-prev)
   (define-key magnatune/browse-mode-map (kbd "C-f") 'magnatune/global-browse-follow-mode)
   (define-key magnatune/browse-mode-map (kbd "n") 'magnatune/browse-next)
   (define-key magnatune/browse-mode-map (kbd "p") 'magnatune/browse-prev)
