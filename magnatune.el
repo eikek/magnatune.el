@@ -365,8 +365,9 @@ Also query the genre tables to add a list of genres to each album."
          (select (concat "select ar.artists_id, ar.name as artist, al.album_id, "
                          "  al.name, al.sku, al.upc, al.release_date, al.popularity, "
                          "  ar.homepage as artist_page, ar.photo as artist_photo, "
-                         "  count(distinct s.song_id) as songs, sum(s.duration) / count(distinct g.genre_id) as length "
-                         "  from artists ar, albums al, songs s, genres_albums ga, genres g "
+                         "  count(distinct s.song_id) as songs, sum(s.duration) / "
+                         "  count(distinct g.genre_id) as length "
+                         " from artists ar, albums al, songs s, genres_albums ga, genres g "
                          "where ar.artists_id = al.artist_id and s.album_id = al.album_id "
                          " and ga.album_id = al.album_id and g.genre_id = ga.genre_id %s "
                          "group by (al.album_id) "
@@ -475,7 +476,8 @@ a string denoting the album name."
   "Return the stream url for a given SONG.
 Return the membership url (if applicable) unless FREE-P is
 truthy. SONG may be a list of songs or a single song, which is
-either a plist with an :mp3 property or a string."
+either a plist with an :mp3 property or a string. Return a single
+url or a list of urls depending on the input."
   (let* ((names (-map (lambda (s) (cond
                               ((eq (magnatune/item-type s) 'song)
                                (plist-get s :mp3))
@@ -512,7 +514,7 @@ If FREE-P is truthy always return the free urls, even with
 configured membership."
   (let* ((albums (magnatune/search-albums album-or-id))
          (songs  (-mapcat 'magnatune/list-songs albums)))
-    (magnatune/make-stream-url songs free-p)))
+    (-list (magnatune/make-stream-url songs free-p))))
 
 (defun magnatune/artist-stream-urls (artist-or-id &optional free-p)
   "Return all stream urls for all songs of ARTIST-OR-ID.
@@ -521,7 +523,7 @@ configured membership."
   (let* ((artists (magnatune/search-artist artist-or-id))
          (albums (-mapcat 'magnatune/list-albums artists))
          (songs (-mapcat 'magnatune/list-songs albums)))
-    (magnatune/make-stream-url songs free-p)))
+    (-list (magnatune/make-stream-url songs free-p))))
 
 
 ;; simple ui ------------------------------------------------------
@@ -540,13 +542,13 @@ configured membership."
   (setq major-mode 'magnatune/browse-mode)
   (setq mode-name "Magnatune")
   (setq fill-column magnatune/column-width)
-  (set (make-local-variable 'update-fn) nil)
-  (set (make-local-variable 'query) nil)
-  (set (make-local-variable 'offset) nil)
-  (set (make-local-variable 'limit) nil)
-  (set (make-local-variable 'order) nil)
-  (set (make-local-variable 'results) nil)
-  (set (make-local-variable 'truncated-items) nil)
+  (set (make-local-variable 'magnatune/--update-fn) nil)
+  (set (make-local-variable 'magnatune/--query) nil)
+  (set (make-local-variable 'magnatune/--offset) nil)
+  (set (make-local-variable 'magnatune/--limit) nil)
+  (set (make-local-variable 'magnatune/--order) nil)
+  (set (make-local-variable 'magnatune/--results) nil)
+  (set (make-local-variable 'magnatune/--truncated-items) nil)
   (setq buffer-read-only t)
   (use-local-map magnatune/browse-mode-map)
   (run-hooks 'magnatune/browse-mode-hook))
@@ -643,8 +645,9 @@ configured membership."
     (setq nametrunc (s-truncate (- magnatune/column-width (length genres) 3)
                                 name))
     (unless (equal name nametrunc)
-      (setq truncated-items (cons (cons (plist-get album :album_id) name)
-                                  truncated-items)))
+      (setq magnatune/--truncated-items
+            (cons (cons (plist-get album :album_id) name)
+                  magnatune/--truncated-items)))
     (put-text-property 0 (length nametrunc)
                        'font-lock-face font-lock-keyword-face nametrunc)
     (put-text-property 0 (length id) 'invisible t id)
@@ -696,8 +699,9 @@ configured membership."
     (insert id)
     (insert str)
     (unless (eq name nametrunc)
-      (setq truncated-items (cons (cons (plist-get song :song_id) name)
-                                  truncated-items)))
+      (setq magnatune/--truncated-items
+            (cons (cons (plist-get song :song_id) name)
+                  magnatune/--truncated-items)))
     (while (< (- (point) beg) (+ (- magnatune/column-width 5) (length id)))
       (insert " "))
     (insert time "\n")
@@ -725,7 +729,7 @@ configured membership."
 (defun magnatune/--display-truncated-lines ()
   (let* ((item (magnatune/get-item-at-point))
          (id (magnatune/item-id item))
-         (cell (assoc id truncated-items)))
+         (cell (assoc id magnatune/--truncated-items)))
     (when cell
       (message "%s" (cdr cell)))))
 
@@ -752,18 +756,23 @@ configured membership."
     (with-current-buffer buff
       (unless (eq major-mode 'magnatune/browse-mode)
         (magnatune/browse-mode)
-        (setq offset 0)
-        (setq limit 200)
-        (setq update-fn
+        (setq magnatune/--offset 0)
+        (setq magnatune/--limit 200)
+        (setq magnatune/--update-fn
               (lambda ()
-                (let ((result (magnatune/search-artist query nil offset limit)))
-                  (setq results (reverse (cons result results)))
+                (let ((result (magnatune/search-artist magnatune/--query
+                                                       nil
+                                                       magnatune/--offset
+                                                       magnatune/--limit)))
+                  (setq magnatune/--results
+                        (reverse (cons result magnatune/--results)))
                   (magnatune/--insert-elements result
-                                               (1- (length results))
+                                               (1- (length magnatune/--results))
                                                'magnatune/insert-artist))
                 (let* ((keys (where-is-internal 'magnatune/next-results))
                        (str (s-join ", " (-map 'key-description keys))))
-                  (message "If you miss some artists, press %s to fetch more." str))))))
+                  (message "If you miss some artists, press %s to fetch more."
+                           str))))))
     buff))
 
 (defun magnatune/--make-artist-buffer ()
@@ -772,12 +781,13 @@ configured membership."
     (with-current-buffer buff
       (unless (eq major-mode 'magnatune/browse-mode)
         (magnatune/browse-mode)
-        (setq update-fn
+        (setq magnatune/--update-fn
               (lambda ()
-                (let ((result (magnatune/list-albums query)))
-                  (setq results (reverse (cons result results)))
+                (let ((result (magnatune/list-albums magnatune/--query)))
+                  (setq magnatune/--results
+                        (reverse (cons result magnatune/--results)))
                   (magnatune/--insert-elements result
-                                               (1- (length results))
+                                               (1- (length magnatune/--results))
                                                'magnatune/insert-album
                                                'magnatune/insert-album-head))))))
     buff))
@@ -788,12 +798,13 @@ configured membership."
     (with-current-buffer buff
       (unless (eq major-mode 'magnatune/browse-mode)
         (magnatune/browse-mode)
-        (setq update-fn
+        (setq magnatune/--update-fn
               (lambda ()
-                (let ((result (magnatune/list-songs query)))
-                  (setq results (reverse (cons result results)))
+                (let ((result (magnatune/list-songs magnatune/--query)))
+                  (setq magnatune/--results
+                        (reverse (cons result magnatune/--results)))
                   (magnatune/--insert-elements result
-                                               (1- (length results))
+                                               (1- (length magnatune/--results))
                                                'magnatune/insert-song
                                                'magnatune/insert-song-head))))))
     buff))
@@ -804,21 +815,27 @@ configured membership."
     (with-current-buffer buff
       (unless (eq major-mode 'magnatune/browse-mode)
         (magnatune/browse-mode)
-        (setq offset 0)
-        (setq limit 200)
-        (setq order 'release_date)
-        (setq update-fn
+        (setq magnatune/--offset 0)
+        (setq magnatune/--limit 200)
+        (setq magnatune/--order 'release_date)
+        (setq magnatune/--update-fn
               (lambda ()
-                (let ((result (magnatune/search-albums query nil offset limit order)))
-                  (setq results (reverse (cons result results)))
+                (let ((result (magnatune/search-albums magnatune/--query
+                                                       nil
+                                                       magnatune/--offset
+                                                       magnatune/--limit
+                                                       magnatune/--order)))
+                  (setq magnatune/--results
+                        (reverse (cons result magnatune/--results)))
                   (magnatune/--insert-elements
                    result
-                   (1- (length results))
+                   (1- (length magnatune/--results))
                    (lambda (album chunk index)
                      (magnatune/insert-album album chunk index t))))
                 (let* ((keys (where-is-internal 'magnatune/next-results))
                        (str (s-join ", " (-map 'key-description keys))))
-                  (message "If you miss some albums, press %s to fetch more." str))))))
+                  (message "If you miss some albums, press %s to fetch more."
+                           str))))))
     buff))
 
 (defun magnatune/--make-all-genres-buffer ()
@@ -827,13 +844,14 @@ configured membership."
     (with-current-buffer buff
       (unless (eq major-mode 'magnatune/browse-mode)
         (magnatune/browse-mode)
-        (setq update-fn
+        (setq magnatune/--update-fn
               (lambda ()
                 (let ((result (magnatune/list-genres)))
-                  (setq results (reverse (cons result results)))
+                  (setq magnatune/--results
+                        (reverse (cons result magnatune/--results)))
                   (magnatune/--insert-elements
                    result
-                   (1- (length results))
+                   (1- (length magnatune/--results))
                    'magnatune/insert-genre))))))
     buff))
 
@@ -857,16 +875,17 @@ This is either 'all-artists, 'all-genres, 'all-albums, 'artist or
       (if append-p
           (goto-char (point-max))
         (erase-buffer))
-      (funcall update-fn)
+      (funcall magnatune/--update-fn)
       (unless append-p
         (goto-char (point-min))))))
 
 (defun magnatune/next-results ()
+  "Get the next chunk of results."
   (interactive)
   (when (and (eq major-mode 'magnatune/browse-mode)
-             limit
-             offset)
-    (setq offset (+ offset limit))
+             magnatune/--limit
+             magnatune/--offset)
+    (setq magnatune/--offset (+ magnatune/--offset magnatune/--limit))
     (magnatune/browse-update-view t)))
 
 (defun magnatune/browse (arg)
@@ -886,11 +905,11 @@ list."
     (with-current-buffer buffer
       (if (and arg
                (not (equal type 'all-genres)))
-          (setq query (read-string "Query: "))
-        (setq query nil))
-      (when (and offset limit)
-        (setq offset 0)
-        (setq limit 200))
+          (setq magnatune/--query (read-string "Query: "))
+        (setq magnatune/--query nil))
+      (when (and magnatune/--offset magnatune/--limit)
+        (setq magnatune/--offset 0)
+        (setq magnatune/--limit 200))
       (magnatune/browse-update-view))
     (unless (eq (current-buffer) buffer)
       (pop-to-buffer buffer))))
@@ -925,8 +944,8 @@ an album, go to its songs. If POP is truthy, `pop-to-buffer'."
                  (error "Not a magnatune buffer."))
                 (t (error "Buffer %s not handled." type)))))
     (with-current-buffer next
-      (unless (equal query item)
-        (setq query item)
+      (unless (equal magnatune/--query item)
+        (setq magnatune/--query item)
         (magnatune/browse-update-view))
       (if pop
           (pop-to-buffer next)
@@ -995,12 +1014,13 @@ The focus moves back to the previous window."
 
 (defun magnatune/browse-jump-generate ()
   "Generate `magnatune/browse-jump' functions for each capital letter."
-  (let ((forms (-map (lambda (el)
-                       `(defun ,(intern (format "magnatune/browse-jump-%c" el)) ()
-                          (interactive)
-                          ,(format "Jump to the first occurence of %c." el)
-                          (magnatune/browse-jump ,(format "%c" el))))
-                     (-iterate '1+ 65 26))))
+  (let ((forms (-map
+                (lambda (el)
+                  `(defun ,(intern (format "magnatune/browse-jump-%c" el)) ()
+                     (interactive)
+                     ,(format "Jump to the first occurence of %c." el)
+                     (magnatune/browse-jump ,(format "%c" el))))
+                (-iterate '1+ 65 26))))
    forms))
 
 (-each (magnatune/browse-jump-generate) 'eval)
@@ -1017,7 +1037,7 @@ The focus moves back to the previous window."
       (search-forward-regexp magnatune/--line-start-regexp nil t)
       (let ((ids (read (match-string 0))))
         (nth (plist-get ids 'index)
-             (nth (plist-get ids 'chunk) results))))))
+             (nth (plist-get ids 'chunk) magnatune/--results))))))
 
 
 (defun magnatune/external-url-hook (urls &optional _arg)
@@ -1032,7 +1052,9 @@ The focus moves back to the previous window."
     (put 'magnatune/--external-url-hook
          :proc
          (apply 'start-process args))
-    (message "Playing %d songs with %s" (length urls) magnatune/external-player)))
+    (message "Playing %d songs with %s"
+             (length urls)
+             magnatune/external-player)))
 
 (defun magnatune/mpc-url-hook (urls &optional arg)
   "Provided hook that appends all URLS to a local mpd."
@@ -1097,7 +1119,7 @@ coming from the artist list."
                       (plist-get item :artists_id))))
         (when id
           (with-current-buffer (magnatune/--make-artist-buffer)
-            (setq query id)
+            (setq magnatune/--query id)
             (magnatune/browse-update-view)
             (if pop-p
                 (pop-to-buffer (current-buffer))
@@ -1138,16 +1160,16 @@ This is only applicable for the 'all-albums' buffer."
   (interactive)
   (when (eq (magnatune/browse-buffer-type) 'all-albums)
     (let ((new (read-char "Sort by n) name, r) release date, p) popularity?"))
-          (old order))
+          (old magnatune/--order))
       (cond
        ((-elem-index new '(?n ?N))
-        (setq order 'name))
+        (setq magnatune/--order 'name))
        ((-elem-index new '(?r ?R))
-        (setq order 'release_date))
+        (setq magnatune/--order 'release_date))
        ((-elem-index new '(?p ?P))
-        (setq order 'popularity))
+        (setq magnatune/--order 'popularity))
        (t (user-error "Uknown choice.")))
-      (unless (eq old order)
+      (unless (eq old magnatune/--order)
         (magnatune/browse-update-view)))))
 
 (defun magnatune/get-artist-page-url ()
