@@ -2,8 +2,8 @@
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Package-Requires: ((dash "2.8.0") (s "1.9.0"))
 ;; Version: 0.1.0
+;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -29,32 +29,9 @@
 ;; album or song. It's for those who like to enjoy magnatune and emacs
 ;; at the same time!
 
-;; Requirements: It needs the sqlite3 command to work.
+;; It needs the sqlite3 command to work. For more info, please see
+;; https://github.com/eikek/magnatune.el.
 
-;; Magnatune provides its data as sqlite file which is downloaded to
-;; disk and then searched. This library provides some simple browsing
-;; functionality: list artist, go to its albums and down the album to
-;; displays its songs. The following shows it better:
-
-;;    all-artist → artist → album
-;;    all-albums → album → artist
-;;    all-genres → album → artist
-
-;; On an artist/album/song item the function
-;; `magnatune/open-item-at-point' collects all stream urls and runs
-;; the hook `magnatune/open-urls-hook' with them. There are two
-;; functions provided for this hook, but it is nil by default.
-
-;; The function `magnatune/urls-at-point' can be used to obtain the
-;; urls programmatically to create custom actions on them.
-
-;; TODO
-;; - toggle display of text (album and song view)
-;; - mark multiple items (combine urls)
-;; - full text search bio of artist/description of albums/name of songs
-;; - be able to download albums (for membership users)
-
-;;
 ;;; Code:
 
 (require 'thingatpt)
