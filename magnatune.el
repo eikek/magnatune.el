@@ -126,7 +126,7 @@ There are two functions provided:
 (defvar magnatune/browse-move-hook nil
   "Hook executed after moved to a new item.")
 
-(defvar magnatune/column-width 90
+(defvar magnatune/column-width 80
   "Maxium columns used for displaying things.")
 
 
@@ -924,9 +924,9 @@ list."
 
 (defun magnatune/find-next (&optional item pop)
   "Find the next items to the ITEM at point.
-It is an error calling this on a non-magnatune buffer. If on the
-artist search view, go to the albums of the current artist. If on
-an album, go to its songs. If POP is truthy, `pop-to-buffer'."
+If on the artist search view, go to the albums of the current
+artist. If on an album, go to its songs. If POP is truthy,
+`pop-to-buffer'."
   (interactive (list (magnatune/get-item-at-point)))
   (let* ((type (magnatune/browse-buffer-type))
          (item (or item (magnatune/get-item-at-point)))
@@ -956,7 +956,7 @@ an album, go to its songs. If POP is truthy, `pop-to-buffer'."
             (switch-to-buffer next)))))))
 
 (defun magnatune/find-next-other-window (&optional item)
-  "Find the next items to the ITEM at point.
+  "Find the next items to the ITEM at point in another window.
 The focus moves back to the previous window."
   (interactive (list (magnatune/get-item-at-point)))
   (let ((win (selected-window)))
@@ -1263,8 +1263,7 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'."
   magnatune/browse-follow-mode
   (lambda () (magnatune/browse-follow-mode 1)))
 
-(if magnatune/browse-mode-map
-    nil
+(unless magnatune/browse-mode-map
   (setq magnatune/browse-mode-map (make-sparse-keymap))
   (suppress-keymap magnatune/browse-mode-map)
   (define-key magnatune/browse-mode-map (kbd "q") 'quit-window)
@@ -1289,9 +1288,6 @@ the mode if ARG is omitted or nil, and toggle it if ARG is `toggle'."
       (define-key magnatune/browse-mode-map
         (kbd (format "%c" c))
         (intern (format "magnatune/browse-jump-%c" c))))))
-
-
-
 
 (provide 'magnatune)
 
