@@ -888,11 +888,12 @@ This is either 'all-artists, 'all-genres, 'all-albums, 'artist or
     (setq magnatune/--offset (+ magnatune/--offset magnatune/--limit))
     (magnatune/browse-update-view t)))
 
+;;;###autoload
 (defun magnatune/browse (arg)
   "The entry point into magnatune's catalog.
 
-Asks to either list artists, albums or genres. Besides for
-genres, a prefix arg asks for a initial query to narrow down the
+Asks to either list artists, albums or genres. For artists and
+albums a prefix arg asks for an initial query to narrow down the
 list."
   (interactive "P")
   (let* ((what (read-char "(A)rtists, A(l)bums or (G)enres? "))
