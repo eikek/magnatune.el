@@ -869,17 +869,26 @@ This is either 'all-artists, 'all-genres, 'all-albums, 'artist or
       (intern (replace-regexp-in-string "\\\*$" "" (cadr type))))))
 
 
-(defun magnatune-browse-update-view (&optional append-p)
-  "Update the current magnatune buffer."
-  (interactive)
+(defun magnatune-browse-update-view (&optional arg)
+  "Clears the buffer and reloads all data.
+With prefix arg, clear the query and set offset to 0."
+  (interactive "P")
+  (when arg
+    (setq magnatune--query nil)
+    (when magnatune--offset
+      (setq magnatune--offset 0)))
   (let ((inhibit-read-only t))
-    (save-excursion
-      (if append-p
-          (goto-char (point-max))
-        (erase-buffer))
-      (funcall magnatune--update-fn)
-      (unless append-p
-        (goto-char (point-min))))))
+    (erase-buffer)
+    (if (not (and magnatune--offset magnatune--limit))
+        (funcall magnatune--update-fn)
+      (let ((lastoff magnatune--offset))
+        (setq magnatune--offset 0)
+        (while (not (eq magnatune--offset lastoff))
+          (funcall magnatune--update-fn)
+          (setq magnatune--offset
+                (+ magnatune--offset magnatune--limit)))
+        (funcall magnatune--update-fn)))
+    (goto-char (point-min))))
 
 (defun magnatune-next-results ()
   "Get the next chunk of results."
@@ -888,7 +897,9 @@ This is either 'all-artists, 'all-genres, 'all-albums, 'artist or
              magnatune--limit
              magnatune--offset)
     (setq magnatune--offset (+ magnatune--offset magnatune--limit))
-    (magnatune-browse-update-view t)))
+    (save-excursion
+      (goto-char (point-max))
+      (funcall magnatune--update-fn))))
 
 ;;;###autoload
 (defun magnatune-browse (arg)
@@ -904,16 +915,19 @@ list."
                    (if (or (eq what ?l) (eq what ?L))
                        (magnatune--make-all-albums-buffer)
                      (magnatune--make-all-genres-buffer))))
-         (type (magnatune-browse-buffer-type buffer)))
+         (type (magnatune-browse-buffer-type buffer))
+         (ask-query (and arg (not (equal type 'all-genres)))))
     (with-current-buffer buffer
-      (if (and arg
-               (not (equal type 'all-genres)))
-          (setq magnatune--query (read-string "Query: "))
-        (setq magnatune--query nil))
-      (when (and magnatune--offset magnatune--limit)
-        (setq magnatune--offset 0)
-        (setq magnatune--limit 200))
-      (magnatune-browse-update-view))
+      (let ((old-query magnatune--query))
+        (when ask-query
+          (setq magnatune--query (read-string "Query: ")))
+        ;; only reload if query differs or the buffer has no results
+        (when (or (not (eq old-query magnatune--query))
+                  (eq nil magnatune--results))
+          (when (and magnatune--offset magnatune--limit)
+            (setq magnatune--offset 0)
+            (setq magnatune--limit 200))
+          (magnatune-browse-update-view))))
     (unless (eq (current-buffer) buffer)
       (pop-to-buffer buffer))))
 

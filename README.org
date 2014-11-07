@@ -25,8 +25,14 @@ Install [[http://www.sqlite.org/download.html][sqlite]] first, on most linuxes i
 or just use your package manager. It's also recommended to install
 [[http://www.gzip.org/][gzip]]. Again on most *nixes this is usually already there.
 
-Then clone the repository and add it to Emac's ~load-path~. Then
-require the file
+You can install it from [[http://melpa.org][MELPA]] via ~package.el~, by evaluating
+
+#+begin_src emacs-lisp
+  (package-install 'magnatune)
+#+end_src
+
+Or clone the repository and add it to Emac's ~load-path~. Then require
+the file:
 
 #+begin_src emacs-lisp :tangle
 (require 'magnatune)
@@ -67,11 +73,21 @@ The location of the ~sqlite3~ command can be configured, too:
 (setq magnatune-sqlite-cmd "/usr/local/bin/sqlite3")
 #+end_src
 
+* Usage
+
 The ~magnatune-browse~ function is the entry point to the
 collection. Usually it's convenient to have a key binding for it:
 #+begin_src emacs-lisp :tangle no
 (global-set-key (kbd "C-<f11>") 'magnatune-browse)
 #+end_src
+
+It will ask whether to display a list of artists, albums or genres.
+
+If called with prefix argument, it asks for a search string (only for
+artists and albums). Use SQLs ~%~ character to do prefix searches; for
+example ~A%~ finds all artists or albums whose name starts with ~A~.
+
+In the following buffer, try the keys below.
 
 * Key bindings
 
