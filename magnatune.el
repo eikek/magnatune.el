@@ -332,7 +332,7 @@ plists."
                             (format " limit %d,%d" offset limit)
                           ""))))
     (cond
-     ((null query-or-id)
+     ((or (null query-or-id) (s-blank? query-or-id))
       (magnatune--sqlite-select (format select "")))
      ((numberp query-or-id)
       (magnatune--sqlite-select
@@ -375,7 +375,7 @@ Also query the genre tables to add a list of genres to each album."
                          (if (and offset limit)
                              (format " limit %d,%d" offset limit)
                            "")))
-         (albums (if (null where)
+         (albums (if (or (null where) (s-blank? where))
                      (magnatune--sqlite-select (format select ""))
                    (magnatune--sqlite-select (format select where)))))
     (-map (lambda (album)
@@ -418,7 +418,7 @@ QUERY-OR-ID is a number, it is used to lookup the album by this
 id. QUERY-OR-ID can also be a genre plist, then return all albums
 tagged with this genre. The result is a list of plists."
   (cond
-   ((null query-or-id)
+   ((or (null query-or-id) (s-blank? query-or-id))
     (magnatune--album-query nil offset limit order))
    ((numberp query-or-id)
     (magnatune--album-query
