@@ -958,18 +958,19 @@ artist. If on an album, go to its songs. If POP is truthy,
                 ((eq type 'album)
                  (current-buffer))
                 ((not type)
-                 (error "Not a magnatune buffer."))
+                 (user-error "Not a magnatune buffer."))
                 (t (error "Buffer %s not handled." type)))))
-    (with-current-buffer next
-      (unless (equal magnatune--query item)
-        (setq magnatune--query item)
-        (magnatune-browse-update-view))
-      (if pop
-          (pop-to-buffer next)
-        (let ((win (magnatune--buffer-window next)))
-          (if (and win (window-live-p win))
-              (select-window win)
-            (switch-to-buffer next)))))))
+    (unless (eq next (current-buffer))
+      (with-current-buffer next
+        (unless (equal magnatune--query item)
+          (setq magnatune--query item)
+          (magnatune-browse-update-view))
+        (if pop
+            (pop-to-buffer next)
+          (let ((win (magnatune--buffer-window next)))
+            (if (and win (window-live-p win))
+                (select-window win)
+              (switch-to-buffer next))))))))
 
 (defun magnatune-find-next-other-window (&optional item)
   "Find the next items to the ITEM at point in another window.
