@@ -2,7 +2,7 @@
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -315,6 +315,10 @@ This is either 'song, 'album, 'artist or 'genre."
    (plist-get item :album_id)
    (plist-get item :artists_id)))
 
+(defun magnatune--null-or-blank-p (str)
+  (or (null str)
+      (and (stringp str) (s-blank? str))))
+
 (defun magnatune-search-artist (&optional query-or-id strict offset limit)
   "Search artists using QUERY-OR-ID.
 If STRICT is t, QUERY-OR-ID must match exactly. Otherwise search
@@ -332,7 +336,7 @@ plists."
                             (format " limit %d,%d" offset limit)
                           ""))))
     (cond
-     ((or (null query-or-id) (s-blank? query-or-id))
+     ((magnatune--null-or-blank-p query-or-id)
       (magnatune--sqlite-select (format select "")))
      ((numberp query-or-id)
       (magnatune--sqlite-select
@@ -375,7 +379,7 @@ Also query the genre tables to add a list of genres to each album."
                          (if (and offset limit)
                              (format " limit %d,%d" offset limit)
                            "")))
-         (albums (if (or (null where) (s-blank? where))
+         (albums (if (null where)
                      (magnatune--sqlite-select (format select ""))
                    (magnatune--sqlite-select (format select where)))))
     (-map (lambda (album)
@@ -418,7 +422,7 @@ QUERY-OR-ID is a number, it is used to lookup the album by this
 id. QUERY-OR-ID can also be a genre plist, then return all albums
 tagged with this genre. The result is a list of plists."
   (cond
-   ((or (null query-or-id) (s-blank? query-or-id))
+   ((magnatune--null-or-blank-p query-or-id)
     (magnatune--album-query nil offset limit order))
    ((numberp query-or-id)
     (magnatune--album-query
