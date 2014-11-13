@@ -251,7 +251,7 @@ the column name). Note: this does not work with multiline values."
                    (with-temp-buffer
                      (insert-file-contents timefile)
                      (string-to-number (buffer-string)))))
-         (idle  (* 7 24 60 60 1000)))
+         (idle  (* 7 24 60 60)))
     (when (or (null lastms)
               (null checksum)
               (< (+ lastms idle) currms))
