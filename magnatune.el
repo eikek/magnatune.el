@@ -1158,23 +1158,25 @@ if not specified. Put the file in TARGET_DIR or
                   (or sku (user-error "Not on an album.")))))
   (when (not (and magnatune-password magnatune-username))
     (user-error "Downloading albums requires a magnatune membership."))
-  (let* ((fmt (or format magnatune-download-format))
-         (url (magnatune--make-url magnatune-download-url-fmt
-                                    sku
-                                    fmt)))
-    (message "Downloading …")
-    (let ((url-request-extra-headers
-           `(("Authorization" . ,(concat "Basic "
-                                         (base64-encode-string
-                                          (concat magnatune-username ":"
-                                                  magnatune-password))))))
-          (file (expand-file-name (concat sku ".zip")
-                                       (or targetdir
-                                           magnatune-download-folder))))
-      (url-copy-file url file)
-      (run-hook-with-args 'magnatune-download-hook file)
-      (message "Downloaded %s." sku)
-      file)))
+  (when (yes-or-no-p (format "Download the album %s to %s? "
+                             sku (or targetdir magnatune-download-folder)))
+    (let* ((fmt (or format magnatune-download-format))
+           (url (magnatune--make-url magnatune-download-url-fmt
+                                     sku
+                                     fmt)))
+      (message "Downloading …")
+      (let ((url-request-extra-headers
+             `(("Authorization" . ,(concat "Basic "
+                                           (base64-encode-string
+                                            (concat magnatune-username ":"
+                                                    magnatune-password))))))
+            (file (expand-file-name (concat sku ".zip")
+                                    (or targetdir
+                                        magnatune-download-folder))))
+        (url-copy-file url file)
+        (run-hook-with-args 'magnatune-download-hook file)
+        (message "Downloaded %s." sku)
+        file))))
 
 (defun magnatune-sort-all-albums ()
   "Sort the albums list.
