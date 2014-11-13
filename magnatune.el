@@ -2,7 +2,7 @@
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Version: 0.2.0
+;; Version: 0.3.0
 ;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
 ;; This file is not part of GNU Emacs.
