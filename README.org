@@ -54,13 +54,17 @@ To enable the open command, add a function to the
 (add-hook 'magnatune-open-urls-hook 'magnatune-mpc-url-hook)
 ;; or
 ;; (add-hook 'magnatune-open-urls-hook 'magnatune-external-url-hook)
+;; (add-hook 'magnatune-open-urls-hook 'magnatune-emms-url-hook)
 #+end_src
 
 If using ~magnatune-external-url-hook~ you also might want to set
-~magnatune-external-player~ to the desired player command.
+~magnatune-external-player~ to the desired player command. If using
+~magnatune-emms-url-hook~, you need to have [[http://www.gnu.org/software/emms/][emms]] configured.
 
 The hook functions are called with the url list and a second optional
-argument which is the prefix arg if used (in raw form).
+argument which is the prefix arg if used (in raw form). The provided
+hooks (for mpd and emms) simply add the urls to the current
+playlist. If a prefix arg is given, the playlist is cleared before.
 
 If you don't have a ~gzip~ command on your system, disable the use of
 it (by default it is enabled):

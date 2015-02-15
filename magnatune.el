@@ -1,8 +1,8 @@
-;;; magnatune.el --- browse to magnatune's music catalog
+;;; magnatune.el --- browse magnatune's music catalog
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Version: 0.3.0
+;; Version: 0.4.0
 ;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -26,8 +26,8 @@
 
 ;; This is a interface to the music catalog on magnatune.com. It
 ;; allows to browse and search the catalog and take actions on an
-;; album or song. It's for those who like to enjoy magnatune and emacs
-;; at the same time!
+;; album or song, like playing it with emms or mpc. It's for those who
+;; like to enjoy magnatune and emacs at the same time!
 
 ;; It needs the sqlite3 command to work. For more info, please see
 ;; https://github.com/eikek/magnatune.el.
@@ -1079,7 +1079,8 @@ The focus moves back to the previous window."
              magnatune-external-player)))
 
 (defun magnatune-mpc-url-hook (urls &optional arg)
-  "Provided hook that appends all URLS to a local mpd."
+  "Provided hook that appends all URLS to a local mpd. With
+prefix arg, the playlist is cleared first."
   (require 'mpc)
   (when arg
       (mpc-proc-cmd "clear"))
@@ -1087,6 +1088,22 @@ The focus moves back to the previous window."
   (when arg
     (mpc-cmd-play))
   (message "Added %d songs to mpd" (length urls)))
+
+(defun magnatune-emms-url-hook (urls &optional arg)
+  "Provided hook that pushes all urls to EMMS current
+playlist. With prefix arg, the playlist is cleared first."
+  (unless (fboundp 'emms)
+    (user-error "EMMS is not available."))
+  (with-current-emms-playlist
+    (when arg
+      (emms-playlist-clear))
+    (-each urls (lambda (url)
+                  (emms-playlist-insert-track (emms-track 'url url))))
+    (when arg
+      (when emms-player-playing-p
+        (emms-stop))
+      (emms-playlist-select-first)
+      (emms-start))))
 
 (defun magnatune--run-url-hooks (urls arg)
   (unless magnatune-open-urls-hook
