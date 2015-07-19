@@ -2,7 +2,7 @@
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Version: 0.4.0
+;; Version: 0.4.1
 ;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -571,25 +571,35 @@ configured membership."
     "--:--"))
 
 
-(defun magnatune--insert-image-handler (_status buf position)
+(defun magnatune--insert-image-handler (_status buf position url)
   (let ((handl (mm-dissect-buffer (current-buffer) t)))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
 	(save-excursion
 	  (goto-char position)
-	  (condition-case nil
-	      (insert-image (mm-get-image handl))
-	    (error
-	     (message "Error loading image %s" url)
-	     (kill-new url)
-	     nil)))))))
+          (when (string-prefix-p url (thing-at-point 'line t))
+            (delete-char (length url))
+            (condition-case nil
+                (insert-image (mm-get-image handl))
+              (error
+               (message "Error loading image %s" url)
+               (kill-new url)
+               nil))))))))
 
 (defun magnatune--insert-image (url &optional buffer pos)
-  "Insert image at URL into BUFFER at POS."
+  "Insert image at URL into BUFFER at POS. It first inserts URL
+in BUFFER at POS and then retrieves the image contents
+async. Once finished it checks whether the url is still the
+same (otherwise it has been changed in the meantime) and if so
+replaces the url with its contents."
+  (with-current-buffer (or buffer (current-buffer))
+    (goto-char (or pos (point-min)))
+    (insert imgurl "\n"))
   (url-retrieve url
 		'magnatune--insert-image-handler
 		(list (or buffer (current-buffer))
-		      (or pos 1))))
+		      (or pos (point-min))
+                      url)))
 
 (defun magnatune-insert-artist (artist chunk index)
   (let ((id (format "(id %d chunk %d index %d)"
@@ -627,7 +637,6 @@ configured membership."
          (name (magnatune--string (plist-get album :name)))
          (imgurl (concat magnatune-band-photo-url-fmt photo)))
     (when album
-      (insert "\n")
       (magnatune--insert-image imgurl)
       (put-text-property 0 (length artist) 'font-lock-face 'bold artist)
       (insert artist "\n" homepage "\n\n")
@@ -684,7 +693,6 @@ configured membership."
                                      album
                                      magnatune-cover-size))
          (str (format "%s | %s" album artist)))
-    (insert "\n")
     (magnatune--insert-image imgurl)
     (put-text-property 0 (length str) 'font-lock-face 'bold str)
     (insert str "\n\n")
