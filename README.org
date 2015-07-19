@@ -4,12 +4,13 @@ This library lets you browse through [[http://www.magnatune.com][magnatune's]] g
 collection using emacs. The [[https://sqlite.org/][sqlite3]] tool is required for this to work.
 
 When on an artist, album or song the ~magnatune-open-item-at-point~
-command collects the stream urls and calls a hook. There are two
+command collects the stream urls and calls a hook. There are three
 provided hook functions:
 
-- one adds the urls via emac's built in ~mpc~ library to the current
-  playlist of a local mpd
-- a second passes the urls to some external player
+1. add the urls via emac's built in ~mpc~ library to the current
+   playlist of a local mpd
+2. add the urls to emms' playlist
+3. pass the urls to some external player
 
 Magnatune provides its catalog as an sqlite3 file at [[http://magnatune.com/info/sqlite-normalized][this site]]. This
 file is downloaded and the =sqlite3= program is used to search the
@@ -19,23 +20,32 @@ not exist on your platform, then you can set ~magnatune-enable-gzip~
 to ~nil~. The database file is checked every week for updates and
 redownloaded, if it changed upstream.
 
+Since 0.5.0 there is a helm interface to the catalog which you can
+invoke with ~magnatune-helm~.
+
 * Installation
 
 Install [[http://www.sqlite.org/download.html][sqlite]] first, on most linuxes it is often already installed,
 or just use your package manager. It's also recommended to install
 [[http://www.gzip.org/][gzip]]. Again on most *nixes this is usually already there.
 
-You can install it from [[http://melpa.org][MELPA]] via ~package.el~, by evaluating
+You can install it from [[http://melpa.org][MELPA]] via ~package.el~, by doing
 
-#+begin_src emacs-lisp
-  (package-install 'magnatune)
-#+end_src
+#+begin_example
+M-x package-install RET magnatune
+#+end_example
 
 Or clone the repository and add it to Emac's ~load-path~. Then require
 the file:
 
 #+begin_src emacs-lisp :tangle
 (require 'magnatune)
+#+end_src
+
+The helm interface is provided via
+
+#+begin_src emacs-lisp :tangle yes
+(require 'magnatune-helm)
 #+end_src
 
 * Configuration
@@ -79,6 +89,8 @@ The location of the ~sqlite3~ command can be configured, too:
 
 * Usage
 
+** standard interface
+
 The ~magnatune-browse~ function is the entry point to the
 collection. Usually it's convenient to have a key binding for it:
 #+begin_src emacs-lisp :tangle no
@@ -92,6 +104,22 @@ artists and albums). Use SQLs ~%~ character to do prefix searches; for
 example ~A%~ finds all artists or albums whose name starts with ~A~.
 
 In the following buffer, try the keys below.
+
+** helm interface
+
+The function ~magnatune-helm~ starts a helm interface to the music
+catalog (all genres, arists and albums). On artist, album or song the
+persistent action opens a buffer with a description of the current
+item (same buffer as with standard interface). When on a song, a
+description of the album of this song is shown.
+
+The “play” action is bound to ~C-a~. It appends the tracks of the
+current item to the playlist. With prefix, the playlist is cleared
+first. It is a persistent action, so you can add to the playlist
+without quitting the helm session.
+
+The default action steps into the current item and you can go back
+with ~C-.~.
 
 * Key bindings
 

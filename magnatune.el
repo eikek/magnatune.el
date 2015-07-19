@@ -2,7 +2,8 @@
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Version: 0.4.1
+;; Version: 0.5.0
+
 ;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
 ;; This file is not part of GNU Emacs.
@@ -31,6 +32,10 @@
 
 ;; It needs the sqlite3 command to work. For more info, please see
 ;; https://github.com/eikek/magnatune.el.
+
+;; There is a helm interface to the catalog provided via `(require
+;; 'magnatune-helm)'. Obviously helm must be installed (it is not
+;; pulled in automatically).
 
 ;;; Code:
 
