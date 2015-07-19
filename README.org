@@ -20,9 +20,6 @@ not exist on your platform, then you can set ~magnatune-enable-gzip~
 to ~nil~. The database file is checked every week for updates and
 redownloaded, if it changed upstream.
 
-Since 0.5.0 there is a helm interface to the catalog which you can
-invoke with ~magnatune-helm~.
-
 * Installation
 
 Install [[http://www.sqlite.org/download.html][sqlite]] first, on most linuxes it is often already installed,
@@ -42,11 +39,14 @@ the file:
 (require 'magnatune)
 #+end_src
 
-The helm interface is provided via
+There is a helm interface, provided via
 
 #+begin_src emacs-lisp :tangle yes
 (require 'magnatune-helm)
 #+end_src
+
+The ~helm~ package must be installed (it is not installed as a
+dependency when using melpa).
 
 * Configuration
 

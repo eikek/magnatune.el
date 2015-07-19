@@ -283,7 +283,20 @@ artist or a genre."
 
 ;;;###autoload
 (defun magnatune-helm ()
-  "helm for all genres, albums and artists at magnatune"
+  "Helm for all genres, albums and artists at magnatune.
+
+On artist, album or song the persistent action opens a buffer
+with a description of the current item (same buffer as with
+standard interface). When on a song, a description of the album
+of this song is shown.
+
+The “play” action is bound to 'C-a'. It appends the tracks of the
+current item to the playlist. With prefix, the playlist is
+cleared first. It is a persistent action, so you can add to the
+playlist without quitting the helm session.
+
+The default action steps into the current item and you can go
+back with 'C-.'."
   (interactive)
   (helm :sources (list (magnatune-helm-all-genres-source)
                        (magnatune-helm-all-artists-source)
@@ -291,6 +304,5 @@ artist or a genre."
         :buffer "*helm magnatune*"
         :keymap magnatune-helm-keymap
         :prompt "Choose: "))
-
 
 (provide 'magnatune-helm)
