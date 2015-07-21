@@ -1,5 +1,7 @@
 #+TITLE: magnatune.el
 
+[[http://melpa.org/#/magnatune][file:http://melpa.org/packages/magnatune-badge.svg]]
+
 This library lets you browse through [[http://www.magnatune.com][magnatune's]] great music
 collection using emacs. The [[https://sqlite.org/][sqlite3]] tool is required for this to work.
 

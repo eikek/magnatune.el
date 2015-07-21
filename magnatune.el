@@ -1226,32 +1226,31 @@ This is only applicable for the 'all-albums' buffer."
       (unless (eq old magnatune--order)
         (magnatune-browse-update-view)))))
 
-(defun magnatune-get-artist-page-url ()
+(defun magnatune-get-artist-page-url (item)
   "Return the home page url of the current artist."
-  (let* ((item (magnatune-get-item-at-point))
-         (type (magnatune-item-type item))
+  (let* ((type (magnatune-item-type item))
          (part (if (eq type 'artist)
                    (plist-get item :homepage)
-                 (if (magnatune-browse-buffer-type)
-                     (plist-get item :artist_page)))))
-    (when part
-      (magnatune--make-url magnatune-artist-page-url-fmt
-                            part))))
+                 (plist-get item :artist_page))))
+    (if part
+        (magnatune--make-url magnatune-artist-page-url-fmt
+                             part)
+      (user-error "Cannot get a url for a %s" type))))
 
-(defun magnatune-get-album-page-url ()
+(defun magnatune-get-album-page-url (item)
   "Return the web page url of the current album."
-  (let* ((item (magnatune-get-item-at-point))
-         (part (plist-get item :sku)))
-    (when part
-      (magnatune--make-url magnatune-album-page-url-fmt
-                            part))))
+  (let* ((part (plist-get item :sku)))
+    (if part
+        (magnatune--make-url magnatune-album-page-url-fmt
+                             part)
+      (user-error "Cannot get an album url from a %s" (magnatune-item-type item)))))
 
 (defun magnatune-browse-artist-or-album-page (char)
   (interactive (list (read-char
                       "Browse (a)rtist page or a(l)bum page. Capital letter copies the url.")))
   (let ((url (if (or (eq char ?a) (eq char ?A))
-                 (magnatune-get-artist-page-url)
-               (magnatune-get-album-page-url))))
+                 (magnatune-get-artist-page-url (magnatune-get-item-at-point))
+               (magnatune-get-album-page-url (magnatune-get-item-at-point)))))
     (when url
       (if (>= char 97)
           (browse-url url)

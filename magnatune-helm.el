@@ -125,6 +125,63 @@
         (helm-quit-and-execute-action
          'magnatune-helm-navigate-back-action)))))
 
+(defun magnatune-helm--page-action (item urlfn)
+  (let ((url (funcall urlfn item)))
+    (if helm-current-prefix-arg
+        (browse-url url)
+      (progn
+          (kill-new url)
+          (message "Copied url %s" url)))))
+
+(defun magnatune-helm-artist-page-action (item)
+  "Copy the url to the artists web page at magnatune. With a
+prefix arg, visit the page using `browse-url'. The same
+information is displayed in a buffer using the default persistent
+action."
+  (magnatune-helm--page-action item 'magnatune-get-artist-page-url))
+
+(defun magnatune-helm-album-page-action (item)
+  "Copy the url to the album web page at magnatune. With a prefix
+arg, visit the page using `browse-url'. The same information is
+displayed in a buffer using the default persistent action."
+  (magnatune-helm--page-action item 'magnatune-get-album-page-url))
+
+(defun magnatune-helm-artist-page ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action
+     'magnatune-helm-artist-page-action)))
+
+(defun magnatune-helm-album-page ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action
+     'magnatune-helm-album-page-action)))
+
+(defun magnatune-helm-copy-stream-urls-action (item)
+  "Copies all stream urls of the given ITEM to the kill
+ring. With prefix argument, use the free urls even if a
+membership is configured."
+  (let ((urls
+         (magnatune-helm--if-item item
+           :artist (magnatune-artist-stream-urls (plist-get item :artists_id)
+                                                 helm-current-prefix-arg)
+           :album (magnatune-album-stream-urls (plist-get item :album_id)
+                                               helm-current-prefix-arg)
+           :song (-list (magnatune-make-stream-url item
+                                                   helm-current-prefix-arg))
+           :genre (user-error "Cannot copy all streams of a genre."))))
+    (if urls
+        (progn
+          (kill-new (mapconcat 'identity urls "\n"))
+          (message "Copied stream urls to kill ring."))
+      (message "No stream urls found."))))
+
+(defun magnatune-helm-copy-stream-urls ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action
+     'magnatune-helm-copy-stream-urls-action)))
 
 (defclass magnatune-helm-source (helm-source-sync)
   ((play-action
@@ -161,7 +218,9 @@ Args ARGS are keywords provided by `helm-source-sync'."
                               (magnatune-search-artist ""))
             :action `(("Browse albums" . magnatune-helm-navigate-next-action)
                       ("Play" . magnatune-helm-play-action)
-                      ("Description" . magnatune-helm-description-action))
+                      ("Description" . magnatune-helm-description-action)
+                      ("Copy artist web page, C-u visit" . magnatune-helm-artist-page-action)
+                      ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action))
             :persistent-action 'magnatune-helm-description-action)))
   magnatune-helm--artists-sources)
 
@@ -198,7 +257,10 @@ artist or a genre."
     :action `(("Browse songs" . magnatune-helm-navigate-next-action)
               ("Play" . magnatune-helm-play-action)
               ("Back" . magnatune-helm-navigate-back-action)
-              ("Description" . magnatune-helm-description-action))
+              ("Description" . magnatune-helm-description-action)
+              ("Copy artist web page, C-u visit" . magnatune-helm-artist-page-action)
+              ("Copy album web page, C-u visit" . magnatune-helm-album-page-action)
+              ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action))
     :persistent-action 'magnatune-helm-description-action))
 
 (defvar magnatune-helm--albums-sources nil)
@@ -211,7 +273,10 @@ artist or a genre."
                               (magnatune-search-albums ""))
             :action `(("Browse songs" . magnatune-helm-navigate-next-action)
                       ("Play" . magnatune-helm-play-action)
-                      ("Description" . magnatune-helm-description-action))
+                      ("Description" . magnatune-helm-description-action)
+                      ("Copy artist web page, C-u visit" . magnatune-helm-artist-page-action)
+                      ("Copy album web page, C-u visit" . magnatune-helm-album-page-action)
+                      ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action))
             :persistent-action 'magnatune-helm-description-action)))
   magnatune-helm--albums-sources)
 
@@ -233,7 +298,10 @@ artist or a genre."
                       (magnatune-list-songs album))
     :action `(("Play" . magnatune-helm-play-action)
               ("Back" . magnatune-helm-navigate-back-action)
-              ("Description" . magnatune-helm-description-action))
+              ("Description" . magnatune-helm-description-action)
+              ("Copy artist web page, C-u visit" . magnatune-helm-artist-page-action)
+              ("Copy album web page, C-u visit" . magnatune-helm-album-page-action)
+              ("Copy stream url, C-u free one" . magnatune-helm-copy-stream-urls-action))
     :persistent-action 'magnatune-helm-description-action))
 
 (defun magnatune-helm--prepare-genre-candidate (genre)
@@ -279,6 +347,9 @@ artist or a genre."
     (define-key map (kbd "C-a") 'magnatune-helm-play)
     (define-key map (kbd "C-e") 'magnatune-helm-navigate-next)
     (define-key map (kbd "C-.") 'magnatune-helm-navigate-back)
+    (define-key map (kbd "C-b a") 'magnatune-helm-artist-page)
+    (define-key map (kbd "C-b l") 'magnatune-helm-album-page)
+    (define-key map (kbd "C-b s") 'magnatune-helm-copy-stream-urls)
     map))
 
 ;;;###autoload
