@@ -2,7 +2,7 @@
 
 ;; Copyright © 2014 Eike Kettner
 
-;; Version: 0.5.0
+;; Version: 0.5.1
 
 ;; Package-Requires: ((dash "2.9.0") (s "1.9.0"))
 
@@ -1107,6 +1107,8 @@ prefix arg, the playlist is cleared first."
 playlist. With prefix arg, the playlist is cleared first."
   (unless (fboundp 'emms)
     (user-error "EMMS is not available."))
+  (unless emms-playlist-buffer
+    (emms-playlist-new))
   (with-current-emms-playlist
     (when arg
       (emms-playlist-clear))
