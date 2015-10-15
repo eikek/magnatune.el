@@ -183,12 +183,30 @@ membership is configured."
     (helm-quit-and-execute-action
      'magnatune-helm-copy-stream-urls-action)))
 
+(defun magnatune-helm-download-album-action (item)
+  "Download the album."
+  (magnatune-helm--if-item item
+    :artist (message "Not on an album.")
+    :album (magnatune-download-album (plist-get item :sku))
+    :song (message "Not on an album.")
+    :genre (message "Not on an album.")))
+
+(defun magnatune-helm-download-album ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-execute-persistent-action 'download-action)))
+
 (defclass magnatune-helm-source (helm-source-sync)
   ((play-action
     :initarg :play-action
     :initform #'magnatune-helm-play-action
     :custom function
-    :documentation "The peristent play action.")))
+    :documentation "The peristent play action.")
+   (download-action
+    :initarg :download-action
+    :initform #'magnatune-helm-download-album-action
+    :custom function
+    :documentation "The peristent download action.")))
 
 (defmacro magnatune-helm-build-source (name &rest args)
   "Build a synchronous helm source with name NAME.
@@ -260,7 +278,8 @@ artist or a genre."
               ("Description" . magnatune-helm-description-action)
               ("Copy artist web page, C-u visit" . magnatune-helm-artist-page-action)
               ("Copy album web page, C-u visit" . magnatune-helm-album-page-action)
-              ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action))
+              ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action)
+              ("Download album" . magnatune-helm-download-album-action))
     :persistent-action 'magnatune-helm-description-action))
 
 (defvar magnatune-helm--albums-sources nil)
@@ -276,7 +295,8 @@ artist or a genre."
                       ("Description" . magnatune-helm-description-action)
                       ("Copy artist web page, C-u visit" . magnatune-helm-artist-page-action)
                       ("Copy album web page, C-u visit" . magnatune-helm-album-page-action)
-                      ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action))
+                      ("Copy all stream urls, C-u free ones" . magnatune-helm-copy-stream-urls-action)
+                      ("Download album" . magnatune-helm-download-album-action))
             :persistent-action 'magnatune-helm-description-action)))
   magnatune-helm--albums-sources)
 
@@ -339,17 +359,17 @@ artist or a genre."
         :keymap magnatune-helm-keymap
         :prompt "Album: "))
 
-
 (defvar magnatune-helm-keymap
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
-    (define-key map (kbd "C-d") 'magnatune-helm-description)
+    (define-key map (kbd "C-s") 'magnatune-helm-description)
     (define-key map (kbd "C-a") 'magnatune-helm-play)
     (define-key map (kbd "C-e") 'magnatune-helm-navigate-next)
     (define-key map (kbd "C-.") 'magnatune-helm-navigate-back)
     (define-key map (kbd "C-b a") 'magnatune-helm-artist-page)
     (define-key map (kbd "C-b l") 'magnatune-helm-album-page)
     (define-key map (kbd "C-b s") 'magnatune-helm-copy-stream-urls)
+    (define-key map (kbd "C-d") 'magnatune-helm-download-album)
     map))
 
 ;;;###autoload
