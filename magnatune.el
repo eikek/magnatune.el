@@ -42,6 +42,7 @@
 (require 'thingatpt)
 (require 'dash)
 (require 's)
+(require 'mm-decode)
 
 (defvar magnatune-username nil
   "The username used for payed membership access")
