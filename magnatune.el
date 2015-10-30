@@ -135,6 +135,13 @@ There are two functions provided:
 (defvar magnatune-column-width 80
   "Maxium columns used for displaying things.")
 
+(defvar magnatune--update-fn)
+(defvar magnatune--query)
+(defvar magnatune--offset)
+(defvar magnatune--limit)
+(defvar magnatune--order)
+(defvar magnatune--results)
+(defvar magnatune--truncated-items)
 
 
 (defun magnatune--make-url (url-fmt &rest args)
